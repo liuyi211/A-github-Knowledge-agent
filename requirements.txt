@@ -1,0 +1,31 @@
+# OMKA MVP 依赖
+# 安装: pip install -r requirements.txt
+
+# Web 框架
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+
+# 数据库
+sqlalchemy==2.0.36
+sqlmodel==0.0.22
+
+# HTTP 客户端
+httpx==0.27.2
+
+# 定时任务
+apscheduler==3.11.0
+croniter==6.2.2
+
+# 数据验证
+pydantic==2.9.2
+pydantic-settings==2.6.1
+
+# 配置解析
+pyyaml==6.0.2
+
+# 飞书 SDK（长连接）
+lark-oapi>=1.5.0
+
+# 开发依赖（可选）
+pytest==8.3.3
+pytest-asyncio==0.24.0
