@@ -48,6 +48,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from omka.app.api.middleware import APILoggingMiddleware
+app.add_middleware(APILoggingMiddleware)
+
 
 @app.get("/health", tags=["系统"])
 async def health_check():
@@ -57,6 +60,10 @@ async def health_check():
         "version": settings.app_version,
         "env": settings.app_env,
     }
+
+
+from omka.app.api import routes_sources
+app.include_router(routes_sources.router, prefix="/sources", tags=["信息源"])
 
 
 if __name__ == "__main__":
