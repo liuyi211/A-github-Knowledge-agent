@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from omka.app.core.config import settings
 from omka.app.core.logging import logger
+from omka.app.core.scheduler import schedule_daily_job, shutdown_scheduler, start_scheduler
 from omka.app.core.settings_service import init_default_settings
 from omka.app.storage.db import init_db
 from omka.app.storage.repositories import load_profile_sources
@@ -25,10 +26,17 @@ async def lifespan(app: FastAPI):
     if loaded > 0:
         logger.info("从配置文件加载 %d 个数据源", loaded)
 
+    start_scheduler()
+
+    from omka.app.services.daily_job import run_daily_job
+    schedule_daily_job(run_daily_job)
+
     logger.info("OMKA 启动完成 | API=http://%s:%d", settings.api_host, settings.api_port)
 
     yield
 
+    logger.info("OMKA 关闭中...")
+    shutdown_scheduler()
     logger.info("OMKA 已关闭")
 
 
@@ -62,11 +70,12 @@ async def health_check():
     }
 
 
-from omka.app.api import routes_digest, routes_feedback, routes_sources
+from omka.app.api import routes_digest, routes_feedback, routes_jobs, routes_sources
 
 app.include_router(routes_sources.router, prefix="/sources", tags=["信息源"])
 app.include_router(routes_feedback.router, prefix="/candidates", tags=["候选池"])
 app.include_router(routes_digest.router, prefix="/digests", tags=["每日简报"])
+app.include_router(routes_jobs.router, prefix="/jobs", tags=["任务"])
 
 
 if __name__ == "__main__":
