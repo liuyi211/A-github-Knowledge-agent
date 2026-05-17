@@ -107,6 +107,7 @@ async def health_check():
 
 
 from omka.app.api import (
+    routes_agent,
     routes_digest,
     routes_feishu,
     routes_feedback,
@@ -125,6 +126,7 @@ app.include_router(routes_knowledge.router, prefix="/knowledge", tags=["知识�
 app.include_router(routes_settings.router, prefix="/settings", tags=["设置"])
 app.include_router(routes_notifications.router, prefix="/notifications", tags=["通知"])
 app.include_router(routes_feishu.router, prefix="/integrations/feishu", tags=["飞书集成"])
+app.include_router(routes_agent.router, prefix="/agent", tags=["Agent"])
 
 
 if __name__ == "__main__":
