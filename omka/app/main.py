@@ -31,13 +31,49 @@ async def lifespan(app: FastAPI):
     from omka.app.services.daily_job import run_daily_job
     schedule_daily_job(run_daily_job)
 
+    _start_feishu_ws()
+
     logger.info("OMKA 启动完成 | API=http://%s:%d", settings.api_host, settings.api_port)
 
     yield
 
     logger.info("OMKA 关闭中...")
+    _stop_feishu_ws()
     shutdown_scheduler()
     logger.info("OMKA 已关闭")
+
+
+def _start_feishu_ws():
+    from omka.app.core.settings_service import get_setting
+    from omka.app.integrations.feishu.config import FeishuConfig
+    from omka.app.integrations.feishu.ws_client import init_ws_client
+
+    if not get_setting("feishu_enabled", False):
+        return
+
+    config = FeishuConfig(
+        enabled=True,
+        app_id=get_setting("feishu_app_id", ""),
+        app_secret=get_setting("feishu_app_secret", ""),
+        verification_token=get_setting("feishu_verification_token", ""),
+        encrypt_key=get_setting("feishu_encrypt_key", ""),
+        command_prefix=get_setting("feishu_command_prefix", "/omka"),
+        agent_conversation_enabled=get_setting("feishu_agent_conversation_enabled", False),
+        auto_bind_direct_chat=get_setting("feishu_auto_bind_direct_chat", True),
+    )
+
+    if not config.is_configured():
+        return
+
+    ws_client = init_ws_client(config)
+    ws_client.start()
+
+
+def _stop_feishu_ws():
+    from omka.app.integrations.feishu.ws_client import get_ws_client
+    ws_client = get_ws_client()
+    if ws_client:
+        ws_client.stop()
 
 
 app = FastAPI(
@@ -72,6 +108,7 @@ async def health_check():
 
 from omka.app.api import (
     routes_digest,
+    routes_feishu,
     routes_feedback,
     routes_jobs,
     routes_knowledge,
@@ -87,6 +124,7 @@ app.include_router(routes_jobs.router, prefix="/jobs", tags=["任务"])
 app.include_router(routes_knowledge.router, prefix="/knowledge", tags=["知识库"])
 app.include_router(routes_settings.router, prefix="/settings", tags=["设置"])
 app.include_router(routes_notifications.router, prefix="/notifications", tags=["通知"])
+app.include_router(routes_feishu.router, prefix="/integrations/feishu", tags=["飞书集成"])
 
 
 if __name__ == "__main__":
